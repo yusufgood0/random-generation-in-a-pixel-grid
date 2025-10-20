@@ -16,6 +16,7 @@ namespace random_generation_in_a_pixel_grid
         WeightedRandom random;
         int height;
         int width;
+        public int GetValue(int x, int y) => _values[x, y];
         public seedMapper(int width, int height, int[] weights, int maxHeight, int? seed = null)
         {
             this.height = height;
@@ -46,7 +47,7 @@ namespace random_generation_in_a_pixel_grid
 
 
         }
-        public unsafe void draw(SpriteBatch spritebatch, Point Position, int pixelWidth, int pixelHeight, Texture2D texture, Color[] colors)
+        public void draw(SpriteBatch spritebatch, Point Position, int pixelWidth, int pixelHeight, Texture2D texture, Color[] colors)
         {
             for (int x = 0; x < width; x++)
             {
@@ -61,6 +62,23 @@ namespace random_generation_in_a_pixel_grid
                         color
                         );
                     spritebatch.End();
+                }
+            }
+        }
+        public void ApplySeaLevel(int seaLevel)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (_heights[x, y] < seaLevel)
+                    {
+                        _values[x, y] = 0;
+                    }
+                    else
+                    {
+                        _values[x, y] = 1;
+                    }
                 }
             }
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -11,7 +12,12 @@ namespace random_generation_in_a_pixel_grid
         private SpriteBatch _spriteBatch;
         private seedMapper _seedMapper;
         private Texture2D _blankTexture;
-        private (int, int) _screenSize;
+        private (int X, int Y) _mapSize;
+        private int _pixelSize = 5;
+        private int maxSeaLevel = 80;
+        private int minSeaLevel = 0;
+        private float _scrollstate;
+        private int _seaLevel;
         private readonly int[] weights = new int[] { 10, 12 };
         public Game1()
         {
@@ -22,19 +28,20 @@ namespace random_generation_in_a_pixel_grid
 
         protected override void Initialize()
         {
-            _screenSize = (1000, 1000);
-            _graphics.PreferredBackBufferWidth = _screenSize.Item1;
-            _graphics.PreferredBackBufferHeight = _screenSize.Item2;
+            _mapSize = (20, 20);
+            _graphics.PreferredBackBufferWidth = _mapSize.X * _pixelSize;
+            _graphics.PreferredBackBufferHeight = _mapSize.Y * _pixelSize;
             _graphics.ApplyChanges();
 
             // TODO: Add your initialization logic here
-            _seedMapper = new seedMapper(200, 200, weights, 80, 30);
+            _seedMapper = new seedMapper(_mapSize.X, _mapSize.Y, weights, maxSeaLevel, null);
             
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 2; i++)
             {
+                
                 _seedMapper.SmoothenTerrain();
             }
-            _seedMapper.SmoothenHeights(5);
+            _seedMapper.SmoothenHeights(8);
             base.Initialize();
         }
 
@@ -51,8 +58,23 @@ namespace random_generation_in_a_pixel_grid
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-
-            // TODO: Add your update logic here
+            MouseState mouse = Mouse.GetState();
+            int x = Math.Clamp(mouse.X / _pixelSize, 0, _mapSize.X-1);
+            int y = Math.Clamp(mouse.Y / _pixelSize, 0, _mapSize.Y - 1);
+            if (mouse.ScrollWheelValue != _scrollstate)
+            {
+                if (mouse.ScrollWheelValue > _scrollstate)
+                {
+                    _seaLevel = Math.Min(_seaLevel + 1, maxSeaLevel);
+                }
+                else
+                {
+                    _seaLevel = Math.Max(_seaLevel - 1, 0);
+                }
+                _seedMapper.ApplySeaLevel(_seaLevel);
+                _scrollstate = mouse.ScrollWheelValue;
+            }
+            Debug.WriteLine(_seedMapper.GetValue(x, y));
 
             base.Update(gameTime);
         }
@@ -60,7 +82,7 @@ namespace random_generation_in_a_pixel_grid
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
-            _seedMapper.draw(_spriteBatch, Point.Zero, 5, 5, _blankTexture, new Color[] {Color.Blue, Color.Green, Color.DarkGreen});
+            _seedMapper.draw(_spriteBatch, Point.Zero, _pixelSize, _pixelSize, _blankTexture, new Color[] {Color.Blue, Color.DarkGreen, Color.DarkGreen});
 
             base.Draw(gameTime);
         }
