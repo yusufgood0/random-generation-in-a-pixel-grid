@@ -28,20 +28,29 @@ namespace random_generation_in_a_pixel_grid
 
         protected override void Initialize()
         {
-            _mapSize = (20, 20);
+            _mapSize = (100, 100);
             _graphics.PreferredBackBufferWidth = _mapSize.X * _pixelSize;
             _graphics.PreferredBackBufferHeight = _mapSize.Y * _pixelSize;
             _graphics.ApplyChanges();
 
             // TODO: Add your initialization logic here
             _seedMapper = new seedMapper(_mapSize.X, _mapSize.Y, weights, maxSeaLevel, null);
-            
+
+            Random rnd = new Random();
+            int H = _seedMapper.height;
+            int W = _seedMapper.width;
+            _seedMapper.SmoothenHeights(100);
+
+            _seedMapper.BezierSmoother(10,
+            rnd.Next(0, W), rnd.Next(-W, W*2), rnd.Next(-W, W*2), rnd.Next(0, W),
+            rnd.Next(0, H), rnd.Next(-H, H*2), rnd.Next(-H, H * 2), rnd.Next(0, H)
+            );
+            _seedMapper.SmoothenHeights(5);
+
             for (int i = 0; i < 2; i++)
             {
-                
                 _seedMapper.SmoothenTerrain();
             }
-            _seedMapper.SmoothenHeights(8);
             base.Initialize();
         }
 
@@ -53,7 +62,7 @@ namespace random_generation_in_a_pixel_grid
             _blankTexture.SetData<Color>(0, new Rectangle(0, 0, 1, 1), new Color[] { Color.White }, 0, 1);
             // TODO: use this.Content to load your game content here
         }
-
+        
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
